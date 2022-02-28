@@ -6,48 +6,55 @@ import com.deck.extras.conversation.type.conversate
 import dev.gaabriel.clubs.common.struct.Command
 import dev.gaabriel.clubs.common.util.integer
 import io.labyrinth.bot.guilded.command.LabyrinthCommandContext
-import io.labyrinth.bot.guilded.database.entity.LabyrinthServer
 import io.labyrinth.bot.guilded.database.entity.LabyrinthServerGiveaway
 import io.labyrinth.bot.guilded.service.CommandService
+import io.labyrinth.bot.guilded.util.alphanumeric
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import kotlin.time.Duration.Companion.seconds
 
 public val CommandService.giveaway: Command<LabyrinthCommandContext> get() = command("giveaway") {
+    val giveawayService = labyrinth.giveawayService
     command("start") {
         runs {
             user.conversate(channel) {
-                val name = (ask("${Emojis.MEMO} **|** What's the giveaway name?")
+                val name = alphanumeric((ask("${Emojis.MEMO} **|** What's the giveaway name?")
                     .awaitReply(60_000)
                     ?: return@conversate timeout())
                     .content
+                )
                 if (name.length > 32)
                     return@conversate run {
                         channel.sendMessage("${Emojis.X} **|** The giveaway name can't have more than 32 characters.")
                         end()
                     }
-                val description = (ask("${Emojis.MEMO} **|** What's the giveaway description?")
+                val description = alphanumeric((ask("${Emojis.MEMO} **|** What's the giveaway description?")
                     .awaitReply(90_000)
                     ?: return@conversate timeout())
                     .content
-                val coins = (ask("${Emojis.MEMO} **|** How many coins are charged for entry?")
-                    .awaitReply(90_000)
-                    ?: return@conversate timeout())
-                    .content
-                    .toLongOrNull() ?: fail("The specified amount of coins is invalid.", Emojis.X)
+                )
                 val endDate = Clock.System.now() + (30).seconds
-                val giveaway = startGiveaway(name, getLabyrinthServer(), user.id, endDate)
-                channel.sendMessage(
-                        """
+                val giveaway = giveawayService.startGiveaway(
+                    giveawayName = name,
+                    giveawayServer = getLabyrinthServer(),
+                    giveawayCreator = user.id,
+                    giveawayMessage = message.id,
+                    giveawayChannel = channel.id,
+                    giveawayEndDate = endDate,
+                    giveawayWinnerCount = 1
+                )
+                val giveawayMessage = channel.sendMessage {
+                    content = """
                     __**$name | GIVEAWAY #${giveaway.id.value}**__
                     
                     ${Emojis.NOTEBOOK} **Description**: `$description`
-                    ${Emojis.MONEY_WITH_WINGS} **Charge**: `$$coins`
                     
                     To participate you just need to execute `${CommandService.PREFIX}giveaway join ${giveaway.id.value}`.
                 """.trimIndent()
-                )
+                }
+                newSuspendedTransaction {
+                    giveaway.messageId = giveawayMessage.id
+                }
             }
         }
     }
@@ -58,7 +65,6 @@ public val CommandService.giveaway: Command<LabyrinthCommandContext> get() = com
                 return@runs reply("${Emojis.X} **|** This server doesn't have any active giveaways at the moment").let {}
             reply(buildString {
                 appendLine("${Emojis.NOTEBOOK} **|** These are the currently active giveaways in this server:")
-                appendLine("")
                 giveaways.forEachIndexed { index, giveaway ->
                     appendLine("**${index}. ${giveaway.name.uppercase()}** - `${giveaway.endTimeMillis}`")
                 }
@@ -110,31 +116,12 @@ public val CommandService.giveaway: Command<LabyrinthCommandContext> get() = com
             ).let {}
             if (giveaway.getServer().id.value != server?.id)
                 return@runs fancy(
-                    "The mentioned giveaway is not happening on this server. To leave a giveaway, you must use the leave command in the giveaway's respective server.",
+                    "The mentioned giveaway is not happening on this server. To end a giveaway, you must use the end command in the giveaway's respective server.",
                     Emojis.X
                 ).let {}
             if (giveaway.createdBy != user.id)
                 return@runs fancy("You can not end this giveaway, given you're not its creator.", Emojis.X).let {}
-            newSuspendedTransaction {
-                giveaway.delete()
-            }
-            fancy("The giveaway **#$giveawayId** has been successfully deleted.", Emojis.WASTEBASKET)
-        }
-    }
-}
-
-private suspend fun startGiveaway(
-    giveawayName: String,
-    giveawayServer: LabyrinthServer,
-    giveawayCreator: String,
-    giveawayEndDate: Instant
-): LabyrinthServerGiveaway {
-    return newSuspendedTransaction {
-        LabyrinthServerGiveaway.new {
-            name = giveawayName
-            server = giveawayServer
-            createdBy = giveawayCreator
-            endTimeMillis = giveawayEndDate.toEpochMilliseconds()
+            giveawayService.endGiveaway(giveaway)
         }
     }
 }

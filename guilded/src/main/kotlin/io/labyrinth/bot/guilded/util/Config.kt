@@ -24,7 +24,7 @@ public fun inspectFile(fileName: String, createIfMissing: Boolean = true): File 
     if (file.exists().not()) {
         if (createIfMissing) {
             file.createNewFile()
-            file.writeBytes(LabyrinthBot::class.java.getResourceAsStream("/$fileName")!!.readAllBytes())
+            file.writeBytes(LabyrinthBot::class.java.getResourceAsStream("/$fileName")!!.readBytes())
         }
         error("File $fileName was required for booting but was not found.")
     }

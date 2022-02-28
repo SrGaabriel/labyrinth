@@ -12,7 +12,7 @@ import io.labyrinth.bot.guilded.command.economy.daily
 import io.labyrinth.bot.guilded.command.economy.money
 import io.labyrinth.bot.guilded.command.misc.giveaway
 
-public class CommandService(private val labyrinth: LabyrinthBot) {
+public class CommandService(public val labyrinth: LabyrinthBot) {
     public val clubs: ClubsInstance<DeckClient> = BotClubsInstance {
         prefix = PREFIX
         handler = LabyrinthCommandHandler(labyrinth, failureHandler, argumentParser)
