@@ -8,6 +8,8 @@ import dev.gaabriel.clubs.common.util.newCommand
 import io.labyrinth.bot.guilded.LabyrinthBot
 import io.labyrinth.bot.guilded.command.LabyrinthCommandContext
 import io.labyrinth.bot.guilded.command.LabyrinthCommandHandler
+import io.labyrinth.bot.guilded.command.economy.daily
+import io.labyrinth.bot.guilded.command.economy.money
 import io.labyrinth.bot.guilded.command.misc.giveaway
 
 public class CommandService(private val labyrinth: LabyrinthBot) {
@@ -17,6 +19,8 @@ public class CommandService(private val labyrinth: LabyrinthBot) {
     }
 
     public suspend fun start() {
+        clubs.register(daily)
+        clubs.register(money)
         clubs.register(giveaway)
         clubs.start(labyrinth.client)
     }

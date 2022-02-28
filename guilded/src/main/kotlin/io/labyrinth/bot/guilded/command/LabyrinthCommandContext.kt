@@ -1,10 +1,12 @@
 package io.labyrinth.bot.guilded.command
 
+import com.deck.common.util.Emoji
 import com.deck.core.DeckClient
 import com.deck.core.entity.Message
 import com.deck.core.stateless.StatelessServer
 import com.deck.core.stateless.StatelessUser
 import com.deck.core.stateless.channel.StatelessMessageChannel
+import com.deck.extras.Emojis
 import dev.gaabriel.clubs.bot.impl.BotCommandContext
 import dev.gaabriel.clubs.common.struct.Command
 import io.labyrinth.bot.guilded.LabyrinthBot
@@ -28,16 +30,22 @@ public class LabyrinthCommandContext(
     internal var _arguments: List<Any> = listOf()
     override val arguments: List<Any> get() = _arguments
 
+    public suspend fun fancy(message: String, emoji: Emoji = Emojis.ROBOT_FACE): Message =
+        reply("$emoji **|** $message") as Message
+
     public suspend fun getLabyrinthUser(): LabyrinthUser {
         if (labyrinthUser == null)
             labyrinthUser = labyrinth.userService.register(user.id)
         return labyrinthUser!!
     }
 
-    public suspend fun getLabyrinthServer(): LabyrinthServer? {
-        if (server == null) return null
-        if (labyrinthServer == null)
+    public suspend fun getLabyrinthServer(): LabyrinthServer {
+        if (server == null) error("")
+        return if (labyrinthServer == null) {
             labyrinthServer = labyrinth.serverService.register(user.id)
-        return labyrinthServer
+            labyrinthServer!!
+        } else {
+            labyrinthServer!!
+        }
     }
 }

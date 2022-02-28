@@ -27,11 +27,13 @@ public class LabyrinthServerGiveaway(id: EntityID<UUID>): UUIDEntity(id) {
     public var participants: String by LabyrinthServerGiveawaysTable.participants
 }
 
-public object LabyrinthServerTable: IdTable<String>() {
+public object LabyrinthServerTable: IdTable<String>("servers") {
     override val id: Column<EntityID<String>> = varchar("id", 8).entityId()
+
+    override val primaryKey: PrimaryKey = PrimaryKey(id)
 }
 
-public object LabyrinthServerGiveawaysTable: UUIDTable() {
+public object LabyrinthServerGiveawaysTable: UUIDTable("giveaways", columnName = "global_id") {
     public val name: Column<String> = varchar("name", 32)
     public val server: Column<EntityID<String>> = reference("server", LabyrinthServerTable)
     public val localId: Column<Int> = integer("local_id").autoIncrement()

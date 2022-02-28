@@ -34,7 +34,7 @@ public val CommandService.giveaway: Command<LabyrinthCommandContext> get() = com
                     ?: return@conversate timeout())
                     .content
                 endDate = Clock.System.now() + (30).seconds
-                val giveaway = startGiveaway(name, getLabyrinthServer()!!, endDate)
+                val giveaway = startGiveaway(name, getLabyrinthServer(), endDate)
                 channel.sendMessage(
                         """
                     __**$name | GIVEAWAY #${giveaway.localId}**__
@@ -49,8 +49,9 @@ public val CommandService.giveaway: Command<LabyrinthCommandContext> get() = com
     }
     command("list") {
         runs {
-            val giveaways = getLabyrinthServer()!!.giveaways
-                .filter { it.endTimeMillis >= System.currentTimeMillis() }
+            val giveaways = getLabyrinthServer().giveaways.filter {
+                it.endTimeMillis >= System.currentTimeMillis()
+            }
             if (giveaways.isEmpty())
                 return@runs reply("${Emojis.X} **|** This server doesn't have any running giveaways").let {}
             reply(buildString {

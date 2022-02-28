@@ -1,10 +1,12 @@
 package io.labyrinth.bot.guilded.database
 
 import com.zaxxer.hikari.HikariDataSource
+import io.labyrinth.bot.guilded.database.entity.LabyrinthServerGiveawaysTable
+import io.labyrinth.bot.guilded.database.entity.LabyrinthServerTable
+import io.labyrinth.bot.guilded.database.entity.LabyrinthUserTable
 import io.labyrinth.bot.guilded.util.LabyrinthConfig
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 public class DatabaseService(
@@ -24,9 +26,12 @@ public class DatabaseService(
         Database.connect(dataSource)
     }
 
-    public suspend fun createTables(vararg tables: Table): Unit = newSuspendedTransaction {
-        SchemaUtils.drop(tables = tables)
-        SchemaUtils.createMissingTablesAndColumns(tables = tables)
+    public suspend fun createTables(): Unit = newSuspendedTransaction {
+        SchemaUtils.createMissingTablesAndColumns(
+            LabyrinthUserTable,
+            LabyrinthServerTable,
+            LabyrinthServerGiveawaysTable
+        )
     }
 
     public companion object {
