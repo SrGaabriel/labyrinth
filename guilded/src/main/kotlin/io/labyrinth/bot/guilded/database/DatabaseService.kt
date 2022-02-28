@@ -27,6 +27,11 @@ public class DatabaseService(
     }
 
     public suspend fun createTables(): Unit = newSuspendedTransaction {
+        SchemaUtils.drop(
+            LabyrinthUserTable,
+            LabyrinthServerTable,
+            LabyrinthServerGiveawaysTable
+        )
         SchemaUtils.createMissingTablesAndColumns(
             LabyrinthUserTable,
             LabyrinthServerTable,

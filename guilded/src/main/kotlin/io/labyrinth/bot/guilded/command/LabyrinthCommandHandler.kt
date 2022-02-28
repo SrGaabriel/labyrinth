@@ -9,6 +9,7 @@ import dev.gaabriel.clubs.common.util.CommandCall
 import dev.gaabriel.clubs.common.util.FailedCommandExecutionException
 import dev.gaabriel.clubs.common.util.FailureHandler
 import io.labyrinth.bot.guilded.LabyrinthBot
+import io.labyrinth.bot.guilded.util.InternalFailureException
 
 public class LabyrinthCommandHandler(
     public val labyrinth: LabyrinthBot,
@@ -32,8 +33,13 @@ public class LabyrinthCommandHandler(
         try {
             context._arguments = argumentParser.parseArguments(context, command.arguments)
             declaration.call(context)
+        } catch (exception: InternalFailureException) {
+            context.send(exception.message!!)
         } catch (exception: FailedCommandExecutionException) {
             failureHandler.onFailure(context, exception.failure)
+        } catch (throwable: Throwable) {
+            context.fancy("Unexpected error occurred: `${throwable::class.qualifiedName}: ${throwable.message}`")
+            throwable.printStackTrace()
         }
     }
 }

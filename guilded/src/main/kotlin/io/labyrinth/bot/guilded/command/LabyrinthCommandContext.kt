@@ -12,6 +12,7 @@ import dev.gaabriel.clubs.common.struct.Command
 import io.labyrinth.bot.guilded.LabyrinthBot
 import io.labyrinth.bot.guilded.database.entity.LabyrinthServer
 import io.labyrinth.bot.guilded.database.entity.LabyrinthUser
+import io.labyrinth.bot.guilded.util.InternalFailureException
 
 @Suppress("unchecked_cast")
 public class LabyrinthCommandContext(
@@ -33,6 +34,9 @@ public class LabyrinthCommandContext(
     public suspend fun fancy(message: String, emoji: Emoji = Emojis.ROBOT_FACE): Message =
         reply("$emoji **|** $message") as Message
 
+    public fun fail(message: String, emoji: Emoji = Emojis.ROBOT_FACE): Nothing =
+        throw InternalFailureException("$emoji **|** $message")
+
     public suspend fun getLabyrinthUser(): LabyrinthUser {
         if (labyrinthUser == null)
             labyrinthUser = labyrinth.userService.register(user.id)
@@ -40,9 +44,9 @@ public class LabyrinthCommandContext(
     }
 
     public suspend fun getLabyrinthServer(): LabyrinthServer {
-        if (server == null) error("")
+        if (server == null) error("Tried to get the DAO server in a private chat context.")
         return if (labyrinthServer == null) {
-            labyrinthServer = labyrinth.serverService.register(user.id)
+            labyrinthServer = labyrinth.serverService.register(server.id)
             labyrinthServer!!
         } else {
             labyrinthServer!!
